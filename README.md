@@ -1,21 +1,28 @@
-<<<<<<< HEAD
-# FlutterManagementApp
-this application is all on one app for managing business planning and also for academia planning 
-=======
-# project2
+# 📌 Flutter Management App
 
-A new Flutter project.
+**FlutterManagementApp** is an all-in-one mobile application designed for **team management, business planning, and academia scheduling**. It helps users manage their teams, take notes, schedule meetings, and track projects efficiently.
 
-## Getting Started
+---
 
-This project is a starting point for a Flutter application.
+## 🚀 Features
 
-A few resources to get you started if this is your first Flutter project:
+✅ **Team Management** – Create, assign, and track team tasks.  
+✅ **Notes & Documentation** – Keep important notes and meeting minutes in one place.  
+✅ **Scheduling & Meetings** – Organize meetings with reminders and notifications.  
+✅ **Project Tracking** – Monitor project progress, deadlines, and milestones.  
+✅ **User-friendly Interface** – Intuitive and responsive UI for easy navigation.  
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+---
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
->>>>>>> d174e4e (first version page ffront-end)
+## 📲 Screenshots  
+
+
+---
+
+## 🔧 Installation Guide
+
+To run the application on your local machine, follow these steps:
+
+1️⃣ **Clone the Repository**  
+```sh
+git clone https://github.com/daouiothmane/FlutterManagementApp.git

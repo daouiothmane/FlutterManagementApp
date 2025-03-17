@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'tasks.dart'; // Import the tasks.dart file
+import 'todo_list_page.dart';
+import 'models/project.dart';
+import 'project_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -12,6 +14,46 @@ class _ProfilePageState extends State<ProfilePage>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
+  String _name = 'John Doe';
+  String _status = 'Available';
+  final String _profileImagePath = 'assets/images/profile.jpg';
+  bool _isEditing = false;
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _statusController = TextEditingController();
+  List<Project> _projects = [
+    Project(
+      id: '1',
+      name: 'Making History',
+      progress: 0.25,
+      description: 'A historical documentation app',
+      createdAt: DateTime.now().subtract(Duration(days: 30)),
+      color: Colors.green,
+    ),
+    Project(
+      id: '2',
+      name: 'Medical App',
+      progress: 0.60,
+      description: 'Healthcare management system',
+      createdAt: DateTime.now().subtract(Duration(days: 45)),
+      color: Colors.blue,
+    ),
+    Project(
+      id: '3',
+      name: 'E-commerce Platform',
+      progress: 0.45,
+      description: 'Online shopping platform',
+      createdAt: DateTime.now().subtract(Duration(days: 15)),
+      color: Colors.purple,
+    ),
+    Project(
+      id: '4',
+      name: 'Social Media App',
+      progress: 0.80,
+      description: 'Social networking platform',
+      createdAt: DateTime.now().subtract(Duration(days: 60)),
+      color: Colors.red,
+    ),
+  ];
 
   @override
   void initState() {
@@ -25,26 +67,136 @@ class _ProfilePageState extends State<ProfilePage>
         setState(() {});
       });
     _controller.forward();
+    _nameController.text = _name;
+    _statusController.text = _status;
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _nameController.dispose();
+    _statusController.dispose();
     super.dispose();
   }
 
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
+  void _toggleEditMode() {
+    setState(() {
+      _isEditing = !_isEditing;
+      if (!_isEditing) {
+        _name = _nameController.text;
+        _status = _statusController.text;
+      }
+    });
+  }
+
+  Future<void> _pickImage() async {
+    // TODO: Implement image picking functionality
+  }
+
+  void _addNewProject() {
+    final TextEditingController nameController = TextEditingController();
+    final TextEditingController descriptionController = TextEditingController();
+    Color selectedColor = Colors.blue;
+
+    showDialog(
       context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
+      builder: (context) => AlertDialog(
+        title: Text('Add New Project'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: InputDecoration(
+                  labelText: 'Project Name',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              SizedBox(height: 16),
+              TextField(
+                controller: descriptionController,
+                decoration: InputDecoration(
+                  labelText: 'Description',
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 3,
+              ),
+              SizedBox(height: 16),
+              DropdownButtonFormField<Color>(
+                value: selectedColor,
+                decoration: InputDecoration(
+                  labelText: 'Project Color',
+                  border: OutlineInputBorder(),
+                ),
+                items: [
+                  Colors.blue,
+                  Colors.green,
+                  Colors.red,
+                  Colors.purple,
+                  Colors.orange,
+                ].map((color) {
+                  String colorName = 'Blue';
+                  if (color == Colors.green) colorName = 'Green';
+                  if (color == Colors.red) colorName = 'Red';
+                  if (color == Colors.purple) colorName = 'Purple';
+                  if (color == Colors.orange) colorName = 'Orange';
+
+                  return DropdownMenuItem(
+                    value: color,
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 20,
+                          height: 20,
+                          decoration: BoxDecoration(
+                            color: color,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Text(colorName),
+                      ],
+                    ),
+                  );
+                }).toList(),
+                onChanged: (color) {
+                  selectedColor = color!;
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (nameController.text.isNotEmpty &&
+                  descriptionController.text.isNotEmpty) {
+                final newProject = Project(
+                  id: DateTime.now().millisecondsSinceEpoch.toString(),
+                  name: nameController.text,
+                  progress: 0.0,
+                  description: descriptionController.text,
+                  createdAt: DateTime.now(),
+                  color: selectedColor,
+                );
+
+                setState(() {
+                  _projects.add(newProject);
+                });
+
+                Navigator.pop(context);
+              }
+            },
+            child: Text('Add Project'),
+          ),
+        ],
+      ),
     );
-    if (picked != null && picked != DateTime.now()) {
-      setState(() {
-        // Handle the selected date
-      });
-    }
   }
 
   @override
@@ -59,6 +211,10 @@ class _ProfilePageState extends State<ProfilePage>
           },
         ),
         actions: <Widget>[
+          IconButton(
+            icon: Icon(_isEditing ? Icons.save : Icons.edit),
+            onPressed: _toggleEditMode,
+          ),
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
@@ -85,11 +241,25 @@ class _ProfilePageState extends State<ProfilePage>
                   Stack(
                     alignment: Alignment.center,
                     children: <Widget>[
-                      CircleAvatar(
-                        radius: 50, // Increased radius for a larger circle
-                        backgroundImage: AssetImage(
-                          'assets/profile.png',
-                        ), // Replace with your profile image asset path
+                      GestureDetector(
+                        onTap: _isEditing ? _pickImage : null,
+                        child: CircleAvatar(
+                          radius: 50,
+                          backgroundImage: AssetImage(_profileImagePath),
+                          child: _isEditing
+                              ? Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.5),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.camera_alt,
+                                    color: Colors.white,
+                                    size: 30,
+                                  ),
+                                )
+                              : null,
+                        ),
                       ),
                       SizedBox(
                         width:
@@ -112,114 +282,157 @@ class _ProfilePageState extends State<ProfilePage>
                   const SizedBox(height: 16), // Space between image and text
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
-                    children: const <Widget>[
-                      Text(
-                        'Sourav Suman',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white, // White text
-                        ),
-                      ),
+                    children: <Widget>[
+                      _isEditing
+                          ? TextField(
+                              controller: _nameController,
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                              textAlign: TextAlign.center,
+                            )
+                          : Text(
+                              _name,
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
                       SizedBox(height: 8), // Margin between name and role
-                      Text(
-                        'App Developer',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Color(0xFFE0E0E0), // Light gray text
-                        ),
-                      ),
+                      _isEditing
+                          ? TextField(
+                              controller: _statusController,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Color(0xFFE0E0E0),
+                              ),
+                              textAlign: TextAlign.center,
+                            )
+                          : Text(
+                              _status,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Color(0xFFE0E0E0),
+                              ),
+                            ),
                     ],
                   ),
                 ],
               ),
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                const Text(
-                  'My Tasks',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.green,
-                    shape: BoxShape.circle,
-                  ),
-                  child: IconButton(
-                    icon: const Icon(Icons.calendar_today, color: Colors.white),
-                    onPressed: () {
-                      _selectDate(context);
-                    },
-                  ),
-                ),
-              ],
-            ),
+            _buildMyTasksCard(),
             const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
-                _buildTaskCard('To Do', '5 tasks now, 1 started', Colors.blue),
+                _buildTaskCard(
+                    'To Do',
+                    '${TodoListPage.inProgressTasks} tasks now, ${TodoListPage.inProgressTasks} started',
+                    Colors.blue),
                 _buildTaskCard(
                   'In Progress',
-                  '1 tasks now, 1 started',
+                  '${TodoListPage.inProgressTasks} tasks now, ${TodoListPage.inProgressTasks} started',
                   Colors.orange,
                 ),
                 _buildTaskCard(
                   'Done',
-                  '18 tasks now, 13 started',
+                  '${TodoListPage.completedTasks} tasks now, ${TodoListPage.completedTasks} started',
                   Colors.green,
                 ),
               ],
             ),
             const SizedBox(height: 24),
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(vertical: 16.0),
-              child: Text(
-                'Active Projects',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF2D3436), // Dark gray text
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Active Projects',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2D3436),
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.add_circle_outline),
+                    onPressed: _addNewProject,
+                  ),
+                ],
+              ),
+            ),
+            // Display projects in pairs
+            ...List.generate(
+              (_projects.length / 2).ceil(),
+              (index) => Padding(
+                padding: const EdgeInsets.only(bottom: 16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: _projects
+                      .skip(index * 2)
+                      .take(2)
+                      .map((project) => _buildProjectCard(project))
+                      .toList(),
                 ),
               ),
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                _buildProjectCard(
-                  'Making History',
-                  0.25,
-                  '9 hours progress',
-                  Colors.green,
-                ),
-                _buildProjectCard(
-                  'Medical App',
-                  0.60,
-                  '20 hours progress',
-                  Colors.blue,
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                _buildProjectCard(
-                  'E-commerce Platform',
-                  0.45,
-                  '15 hours progress',
-                  Colors.purple,
-                ),
-                _buildProjectCard(
-                  'Social Media App',
-                  0.80,
-                  '32 hours progress',
-                  Colors.red,
-                ),
-              ],
-            ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMyTasksCard() {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => TodoListPage(title: 'My Tasks'),
+          ),
+        );
+      },
+      child: Card(
+        elevation: 4,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15),
+        ),
+        color: Colors.green, // Added green background color
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'My Tasks',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors
+                          .white, // Changed text color to white for better contrast
+                    ),
+                  ),
+                  Icon(Icons.arrow_forward_ios,
+                      color: Colors.white), // Changed icon color to white
+                ],
+              ),
+              SizedBox(height: 10),
+              Text(
+                'Manage your daily tasks and to-dos',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(
+                      0.8), // Changed text color to white with opacity
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -257,69 +470,94 @@ class _ProfilePageState extends State<ProfilePage>
     );
   }
 
-  Widget _buildProjectCard(
-    String title,
-    double progress,
-    String subtitle,
-    Color color,
-  ) {
+  Widget _buildProjectCard(Project project) {
     return Expanded(
       child: GestureDetector(
         onTap: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => TasksPage()),
+            MaterialPageRoute(
+              builder: (context) => ProjectPage(project: project),
+            ),
           );
         },
         child: Card(
           color: Colors.white,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8.0),
+            borderRadius: BorderRadius.circular(12.0),
           ),
-          elevation: 2,
+          elevation: 4,
           margin: const EdgeInsets.symmetric(horizontal: 8.0),
           child: Padding(
-            padding: const EdgeInsets.all(12.0),
+            padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2D3436), // Dark gray text
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Stack(
-                  alignment: Alignment.center,
-                  children: <Widget>[
-                    SizedBox(
-                      width: 50,
-                      height: 50,
-                      child: CircularProgressIndicator(
-                        value: progress,
-                        strokeWidth: 8.0,
-                        valueColor: AlwaysStoppedAnimation<Color>(color),
-                        backgroundColor: Colors.grey[300],
+                Row(
+                  children: [
+                    Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: project.color,
+                        shape: BoxShape.circle,
                       ),
                     ),
-                    Text(
-                      '${(progress * 100).toInt()}%',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF636E72), // Gray text
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        project.name,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF2D3436),
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 12),
+                Stack(
+                  alignment: Alignment.center,
+                  children: <Widget>[
+                    SizedBox(
+                      width: 60,
+                      height: 60,
+                      child: CircularProgressIndicator(
+                        value: project.progress,
+                        strokeWidth: 8.0,
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(project.color),
+                        backgroundColor: Colors.grey[300],
+                      ),
+                    ),
+                    Text(
+                      '${(project.progress * 100).toInt()}%',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF2D3436),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
                 Text(
-                  subtitle,
-                  style: const TextStyle(
+                  project.description,
+                  style: TextStyle(
                     fontSize: 12,
-                    color: Color(0xFFB2BEC3), // Light gray text
+                    color: Colors.grey[600],
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Created ${project.createdAt.toString().split(' ')[0]}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[400],
                   ),
                 ),
               ],

@@ -1,21 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:table_calendar/table_calendar.dart';
 import 'settings.dart'; // Import the settings page
 import 'profile.dart'; // Import the profile page
 import 'schedule.dart'; // Import the schedule page
 import 'notes.dart'; // Import the notes page
+import 'bills.dart';
+import 'package:percent_indicator/percent_indicator.dart';
 
 class TasksPage extends StatefulWidget {
-  const TasksPage({Key? key}) : super(key: key);
+  const TasksPage({super.key});
 
   @override
-  _TasksPageState createState() => _TasksPageState();
+  State<TasksPage> createState() => TasksPageState();
 }
 
-class _TasksPageState extends State<TasksPage> {
+class TasksPageState extends State<TasksPage> {
   int _selectedIndex = 0;
   final List<String> _labels = [
-    'Profile', // Changed from 'Contacts' to 'Profile'
+    'Profile',
     'Schedule',
     'Bills',
     'Notes',
@@ -23,7 +24,7 @@ class _TasksPageState extends State<TasksPage> {
   ];
 
   final List<IconData> _icons = [
-    Icons.person, // Changed from Icons.contacts to Icons.person
+    Icons.person,
     Icons.schedule,
     Icons.receipt,
     Icons.note,
@@ -31,21 +32,13 @@ class _TasksPageState extends State<TasksPage> {
   ];
 
   final Map<DateTime, List<String>> _events = {};
-  List<String> _selectedEvents = [];
-  CalendarFormat _calendarFormat = CalendarFormat.month;
+  final List<Map<String, dynamic>> _tasks = [];
   DateTime _selectedDay = DateTime.now();
 
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
-    if (index == 3) {
-      // Assuming 'Notes' is at index 3
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => NotesPage()),
-      );
-    }
   }
 
   void _addEvent(String event) {
@@ -54,22 +47,43 @@ class _TasksPageState extends State<TasksPage> {
     } else {
       _events[_selectedDay] = [event];
     }
-    setState(() {
-      _selectedEvents = _events[_selectedDay]!;
-    });
+    setState(() {});
+  }
+
+  Widget _buildTaskCard(Map<String, dynamic> task) {
+    return Card(
+      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: ListTile(
+        title: Text(task['title'] ?? ''),
+        subtitle: Text(task['description'] ?? ''),
+        trailing: IconButton(
+          icon: Icon(Icons.delete),
+          onPressed: () {
+            setState(() {
+              _tasks.remove(task);
+            });
+          },
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Removed the AppBar
       body: _selectedIndex == 1
-          ? SchedulePage() // Use the SchedulePage
+          ? SchedulePage()
           : _selectedIndex == 4
-              ? SettingsPage() // Use the SettingsPage
+              ? SettingsPage()
               : _selectedIndex == 0
-                  ? ProfilePage() // Use the ProfilePage
-                  : Center(child: Text('Selected: ${_labels[_selectedIndex]}')),
+                  ? ProfilePage()
+                  : _selectedIndex == 3
+                      ? NotesPage()
+                      : _selectedIndex == 2
+                          ? BillsPage()
+                          : Center(
+                              child:
+                                  Text('Selected: ${_labels[_selectedIndex]}')),
       bottomNavigationBar: Container(
         color: Colors.white,
         child: Row(
@@ -102,8 +116,7 @@ class _TasksPageState extends State<TasksPage> {
                         ),
                       ),
                     ),
-                    SizedBox(
-                        height: 4.0), // Add some space between icon and text
+                    SizedBox(height: 4.0),
                     Transform.translate(
                       offset: _selectedIndex == index
                           ? Offset(0, -5)
@@ -125,46 +138,6 @@ class _TasksPageState extends State<TasksPage> {
           }),
         ),
       ),
-    );
-  }
-
-  Widget _buildScheduleView() {
-    return Column(
-      children: [
-        TableCalendar(
-          firstDay: DateTime.utc(2000, 1, 1),
-          lastDay: DateTime.utc(2100, 12, 31),
-          focusedDay: _selectedDay,
-          calendarFormat: _calendarFormat,
-          selectedDayPredicate: (day) {
-            return isSameDay(_selectedDay, day);
-          },
-          onDaySelected: (selectedDay, focusedDay) {
-            setState(() {
-              _selectedDay = selectedDay;
-              _selectedEvents = _events[selectedDay] ?? [];
-            });
-          },
-          onFormatChanged: (format) {
-            setState(() {
-              _calendarFormat = format;
-            });
-          },
-          eventLoader: (day) {
-            return _events[day] ?? [];
-          },
-        ),
-        const SizedBox(height: 8.0),
-        Expanded(
-          child: ListView(
-            children: _selectedEvents
-                .map((event) => ListTile(
-                      title: Text(event),
-                    ))
-                .toList(),
-          ),
-        ),
-      ],
     );
   }
 
@@ -265,8 +238,8 @@ class _LoginPageState extends State<LoginPage> {
             child: Column(
               children: [
                 const SizedBox(
-                    height:
-                        30), // Adjust this value to position the logo vertically
+                  height: 30,
+                ), // Adjust this value to position the logo vertically
                 CircleAvatar(
                   radius: 60, // Increased radius for a larger circle
                   backgroundImage: AssetImage(
@@ -559,8 +532,8 @@ class _SignUpPageState extends State<SignUpPage> {
             child: Column(
               children: [
                 const SizedBox(
-                    height:
-                        30), // Adjust this value to position the logo vertically
+                  height: 30,
+                ), // Adjust this value to position the logo vertically
                 CircleAvatar(
                   radius: 60, // Increased radius for a larger circle
                   backgroundImage: AssetImage(
